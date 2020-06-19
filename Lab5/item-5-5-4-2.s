@@ -5,7 +5,7 @@ main:
     LDR r1, =0x5555AAAA @valor do input de X
     LDR r8, =0x5 @valor da sequencia Y
     LDR r9, =0x3 @r9 valor do inteiro n comprimento de Y
-    MOV r11, r9
+    SUB r11, r9, #1
     LDR r2, =0 @r2 valor de saida 
     LDR r7, =0 @auxiliar do loopIgual 
     MOV r3, r1 @r3 auxiliar com valor do input
@@ -19,10 +19,11 @@ loopPrincipal:
     BEQ end
 
     MOV r5, r4, LSR r11 @vou analizar o bit i significativo de Y
-    MOV r6, r3, LSR #31 @vou analizar o bit mais significativo de X
+    MOV r6, r1, LSR #31 @vou analizar o bit mais significativo de X
 
     @Atualiza valores dos aux
     SUB r10, r10, #1 
+    MOV r3, r1 @r3 auxiliar com valor do input
 
     @Loops de comparacao
     CMP r5, r6
@@ -31,19 +32,29 @@ loopPrincipal:
 
 naoIguais:
     LDR r7, =0
-    MOV r3, r3, LSL #1
+    MOV r1, r1, LSL #1
     MOV r11, r9 @ restart no indice de y
+    SUB r11, r11, #1 @ restart no indice de y
     B loopPrincipal 
 
 loopIguais:
     SUB r11, r11, #1 @ passa para proximo valor de Y 
     ADD r7, r7, #1 @ adiciona 1 passo do loop
     CMP r7, r9 @compara com r9
-    LDR r12, =32
-    SUB r12, r12, r11
-    MOV r4, r4, LSL r12
-    MOV r4, r4, LSR r12
     BEQ achouSequencia
+    LDR r12, =31
+    SUB r12, r12, r11
+
+    @ Atualizar valor de Y que quero analizar
+    MOV r4, r9, LSL r11
+    MOV r4, r4, LSR #31
+
+    @ Atualiza valor de X que quero analizar
+    MOV r3, r3, LSL r11
+    MOV r6, r3, LSR #31  @vou analizar o bit mais significativo de X
+
+    CMP r6, r4
+    BEQ loopIguais
     BNE loopPrincipal
 
 achouSequencia: 
@@ -53,6 +64,7 @@ achouSequencia:
     ADD r2, r2, #1 @adiciona 1 na saida
     MOV r2, r2, LSL #1
     MOV r11, r9 @ restart no indice de y
+    SUB r11, r11, #1 @ restart no indice de y
     B loopPrincipal 
 
 end: 
