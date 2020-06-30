@@ -21,17 +21,17 @@ loopCheckPrime:        @Loop de verificacao de i que vai de 0 ao valor do numero
  BL divisao              @Sub rotina de divisao
  CMP R8,#0               @Compara se o resto eh zero
  BEQ naoPrimo             @Se for zero, entao temos um divisor, logo numero nao eh primo
- ADD R2,R2,#01            @se nao for zero, acrescento o divisor de analise
- CMP R2,R1                @Compare divider with test number
+ ADD R2,R2,#01            @Se nao for zero, acrescento o divisor de analise
+ CMP R2,R1                
  BEQ ehPrimo                @All possible numbers are done means It's prime
  B loopCheckPrime
-                      @If not repeat until end
+
 naoPrimo: 
- LDR R4,=0x0       @Declaring test number is not prime
+ LDR R4,=0x0       @não é primo retorna 0
  B end
-                    @Jumping to infinite looping
+
 ehPrimo: 
- LDR R4,=0x1       @Declaring test number is prime number
+ LDR R4,=0x1       @eh primo, retorna 1
  B end
 
 end:
@@ -72,4 +72,4 @@ divisaoSecondLoop:
     BCC       divisaoSecondLoop           
                            
 divideEnd:
-    MOV PC,LR                @Return back to main function   
+    MOV PC,LR  @volta para a funcao que realizou a chamada  
