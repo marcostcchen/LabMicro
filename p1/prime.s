@@ -5,7 +5,7 @@
 
 main:
 
- MOV R0,#15               @ valor de teste
+ MOV R0,#2               @ valor de teste
 
  CMP R0,#01               @Comparar com 1
  BEQ ehPrimo              @If equal declare directly as prime
@@ -14,7 +14,7 @@ main:
  BEQ ehPrimo              @If equal declare directly as prime
  
  MOV R1,R0                @copiando valor de teste para r1
- MOV R2,#02               @divisor inicial vai ser o 2
+ MOV R2,#2               @divisor inicial vai ser o 2
 
 loopCheckPrime:        @Loop de verificacao de i que vai de 0 ao valor do numero estudado para verificarmos se tem algum divisor                     
  
@@ -43,7 +43,7 @@ divisao:
     MOV  R9,R2 @ Dividendo antigo R2
     
     CMP  R9, #0 @ comparo para ver se nao to dividindo por zero
-    BEQ divide_end 
+    BEQ divideEnd 
 
     MOV  R10,#0 @ Resultado  antigo R0
     MOV  R7,#1 @ Variavel que vai ficar diminuindo antigo R3
