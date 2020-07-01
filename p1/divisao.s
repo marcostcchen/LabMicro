@@ -3,7 +3,7 @@
 
 main:
 
-    MOV  R1,#128 @ Divisor
+    LDR  R1,=9833065 @ Divisor
     MOV  R2,#5 @ Dividendo
     
     CMP  R2, #0 @ comparo para ver se nao to dividindo por zero

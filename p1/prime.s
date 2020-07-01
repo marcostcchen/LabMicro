@@ -5,7 +5,7 @@
 
 main:
 
- MOV R0,#2               @ valor de teste
+ LDR R0,=9833063            @ valor de teste
 
  CMP R0,#01               @Comparar com 1
  BEQ ehPrimo              @If equal declare directly as prime
@@ -45,8 +45,8 @@ divisao:
     CMP  R9, #0 @ comparo para ver se nao to dividindo por zero
     BEQ divideEnd 
 
-    MOV  R10,#0 @ Resultado  antigo R0
-    MOV  R7,#1 @ Variavel que vai ficar diminuindo antigo R3
+    LDR  R10,=0 @ Resultado  antigo R0
+    LDR  R7,=1 @ Variavel que vai ficar diminuindo antigo R3
 
     BLS startDivisao  
                       
@@ -56,7 +56,7 @@ startDivisao:
     @ LS <=
     MOVLS    R9,R9,LSL#1 @ Dividendo x2
     MOVLS    R7,R7,LSL#1 @ Variavel que vai ficar diminuindo
-    BLS      divisaoSecondLoop
+    BLS      startDivisao
 
 divisaoSecondLoop:
     @ Aqui o dividendo ja eh maior que o divisor
