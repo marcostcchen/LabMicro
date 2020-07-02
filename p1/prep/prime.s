@@ -5,13 +5,13 @@
 
 main:
 
- LDR R0,=9833063            @ valor de teste
+ LDR R0,=9833066            @ valor de teste
 
  CMP R0,#01               @Comparar com 1
- BEQ ehPrimo              @If equal declare directly as prime
+ BEQ ehPrimo              @Se for 1 já é primo
 
  CMP R0,#02               @Comparar com 2
- BEQ ehPrimo              @If equal declare directly as prime
+ BEQ ehPrimo              @Se for 2 já é primo
  
  MOV R1,R0                @copiando valor de teste para r1
  MOV R2,#2               @divisor inicial vai ser o 2
