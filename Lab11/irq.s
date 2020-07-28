@@ -66,12 +66,11 @@ do_software_interrupt:
     
 @Rotina de interrupções IRQ    
 do_irq_interrupt: @Rotina de interrupções IRQ
+   STMFD sp!, {r0-r12, PC} @Guarda os valores do modo supervisor no stack
    
-   @ Vou guardar primeiro no stack, dps vou clonar os valores do stack no linhaA.
-   STMFD sp!, {r0-r12, PC} @Guarda os valores no stack
    LDR r0, =linhaA
-   LDR r1, =LR
-   LDR r2, =CPSR
+   MOV r1, lr
+   MOV r2, cpsr
 
 
    LDR r0, INTPND @Carrega o registrador de status de interrupção 
