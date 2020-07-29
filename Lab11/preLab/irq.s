@@ -66,12 +66,32 @@ do_software_interrupt:
     
 @Rotina de interrupções IRQ    
 do_irq_interrupt: @Rotina de interrupções IRQ
-   STMFD sp!, {r0-r12, PC} @Guarda os valores do modo supervisor no stack
    
-   LDR r0, =linhaA
-   MOV r1, lr
-   MOV r2, cpsr
+   @ Valores fixos para os registradores apenas para visualizar se 
+   @ a memória de linhaA está armazenando os registradores corretamente
+   LDR r0, =1 @ Teste
+   LDR r1, =2 @ Teste
+   LDR r2, =3 @ Teste
+   LDR r3, =4 @ Teste
+   LDR r4, =5 @ Teste
+   LDR r5, =6 @ Teste
+   LDR r6, =7 @ Teste
+   LDR r7, =1 @ Teste
+   LDR r8, =2 @ Teste
+   LDR r9, =3 @ Teste
+   LDR r10, =4 @ Teste
+   LDR r11, =5 @ Teste
+   LDR r12, =6 @ Teste
 
+   STMFD sp!, {r0-r12, PC} @Guarda os valores do modo supervisor no stack
+
+   @Funcao para armazenar os registradores do processoA
+   LDR r0, =linhaA @minha pilha para o processoA
+   STMFD r0!, {r1-r12}@Guardo os valores do processoA dos regs r1 a r12
+   LDR r1, [sp] @Quero pegar o valor de r0
+   STMFD r0!, {r1} @subo o valor de r0 que faltou, no endereco de linhaA terei os valores dos regs de r0 a r12
+
+   @Loop para copiar os dados que estao no SP
 
    LDR r0, INTPND @Carrega o registrador de status de interrupção 
    LDR r0, [r0]
