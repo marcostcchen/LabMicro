@@ -13,5 +13,8 @@ SECTIONS{
     irq_stack_top = .; /* Pilha IRQ */
 
     . = . + 0x1000; /* 4kB of stack memory */
-    linhaA = .; /* Estrutura de Dados */
+    linhaA = .; /* Estrutura de Dados A */
+
+    . = . + 0x1000; /* 4kB of stack memory */
+    linhaB = .; /* Estrutura de Dados B*/
 }

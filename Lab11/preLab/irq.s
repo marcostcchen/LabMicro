@@ -24,6 +24,7 @@ INTEN:.word 0x10140010 @interrupt enable register
 TIMER0L:.word 0x101E2000 @Timer 0 load register
 TIMER0V:.word 0x101E2004 @Timer 0 value registers
 TIMER0C:.word 0x101E2008 @timer 0 control register
+NPROC: .word 0
 
 _Reset:
 	LDR sp, =svc_stack_top
@@ -68,22 +69,23 @@ do_irq_interrupt: @Rotina de interrupções IRQ
    SUB LR, LR, #0x4
    STMFD sp!, {r0-r12, lr} @Empilha os registradores
 
-   LDR r0, =1 
-   LDR r1, =2 
-   LDR r2, =3 
-   LDR r3, =4 
-   LDR r4, =5 
-   LDR r6, =7 
-   LDR r7, =1 
-   LDR r8, =2 
-   LDR r9, =3 
-   LDR r10, =4 
-   LDR r11, =5 
-   LDR r12, =100 
+   STMFD sp!, {r2} @salvo r2
+   LDR r2, =NPROC
+   CMP r2, #0 @Ver se NPROC eh zero
+   LDMFD sp!, {r2} @retorno valor de r2
+
+   BNE changeToA
+   BEQ changeToB
+
+changeToA:
+   LDR r12, =linhaA
+   STMFD sp!, {r1} @salvo r1
+   LDR r1, =1
+   STR r1, [r2] @salvo no valor de NPROC
+   LDMFD sp!, {r1} @retorna valor de r1
 
    @Funcao para armazenar os registradores do processoA guardando no formato {r0-r12, PC, CPSR, LR, SP}
    STMFD sp!, {r12} @empilha R0
-   LDR r12, =linhaA
    STM r12, {r0-r11}@Guardo os valores do processoA dos regs r1 a r12
    LDMFD sp!, {r2} @pega o valor antigo de r12 
    STR r2, [r12, #48]
@@ -105,34 +107,88 @@ do_irq_interrupt: @Rotina de interrupções IRQ
    STR SP, [r12, #64] @Guarda o SP do modo supervisor
    MSR CPSR, R1 @Volta para o modo atual irq
 
-   @ Troca tudo
-   LDR r0, =11
-   LDR r1, =12 
-   LDR r2, =13 
-   LDR r3, =14 
-   LDR r4, =15 
-   LDR r6, =16 
+   @Restauro os regs do outro processo
+   LDR r12, =linhaB
+   LDM r12, {r0 - r12}
+   STMFD sp!, {r0-r12} @guardo os valores dos regs
    
-   @Recuperar {r0-r12, PC, CPSR, LR, SP }
-   LDR r12, =linhaA
-   SUB r12, r12, #92 @pega o primeiro item do vetor
-   MRS R1, CPSR @Armazena o modo atual irq
-   MRS R2, SPSR 
+   LDR r12, =linhaB
+   LDR r1, [r12,#52] @Carrega valor de PC
+   LDR r2, [r12,#56] @Carrega valor de CPSR
+   LDR r3, [r12,#60] @Carrega valor de LR
+   LDR r4, [r12,#64] @Carrega valor de SP
+
+   @Load do LR e SP
    MSR CPSR, R2 @vai para o modo supervisor
-   LDMFD r12!, {LR,SP} @Guarda o LR e SP do modo supervisor
-   LDMFD r12!, {r11} @pego o CPSR supervisor
-   MSR CPSR, R11 @atualizo o valor do CPSR anterior
+   MOV LR, r3 @LOAD o LR do modo supervisor
+   MOV SP, r4 @LOAD o SP do modo supervisor
    MSR CPSR, R1 @Volta para o modo atual irq
-   LDMFD r12!, {r0, r0-r12}^
+   
+   @Retorna os regs
+   LDMFD sp!, {r0-r12}
 
-
-   @Loop para copiar os dados que estao no SP
    LDR r0, INTPND @Carrega o registrador de status de interrupção 
    LDR r0, [r0]
    TST r0, #0x0010 @verifica se é uma interupção de timer
-   BLNE handler @vai para o rotina de tratamento da interupção de timer
-   LDMFD sp!,{R0-R12,pc}
+   BLNE handler_taskA @vai para o rotina de tratamento da interupção de timer
+   LDMFD sp!,{R0-R12,pc}^
 
+changeToB: 
+   LDR r12, =linhaB
+   STMFD sp!, {r1} @salvo r1
+   LDR r1, =0
+   STR r1, [r2] @salvo no valor de NPROC
+   LDMFD sp!, {r1} @retorna valor de r1
+
+   @Funcao para armazenar os registradores do processoA guardando no formato {r0-r12, PC, CPSR, LR, SP}
+   STMFD sp!, {r12} @empilha R0
+   STM r12, {r0-r11}@Guardo os valores do processoA dos regs r1 a r12
+   LDMFD sp!, {r2} @pega o valor antigo de r12 
+   STR r2, [r12, #48]
+
+   @Agr subir os registradores LR, CPSR, SP, PC, 
+   @PC/supervisor
+   LDR r2, [sp, #52] @Pego o valor de lr armazenado
+   STR r2, [r12, #52] @subo o valor de PC original que é LR - 4 que estava salvo já na pilha
+   
+   @CPSR
+   MRS r4, spsr @pego valor do CPSR/supervisor
+   STR r4, [r12, #56] @guardo em linha A
+
+   @LR e SP
+   MRS R1, CPSR @Armazena o modo atual irq
+   MRS R2, SPSR 
+   MSR CPSR, R2 @vai para o modo supervisor
+   STR LR, [r12, #60] @Guarda o LR do modo supervisor
+   STR SP, [r12, #64] @Guarda o SP do modo supervisor
+   MSR CPSR, R1 @Volta para o modo atual irq
+
+   @Restauro os regs do outro processo
+      @Restauro os regs do outro processo
+   LDR r12, =linhaA
+   LDM r12, {r0 - r12}
+   STMFD sp!, {r0-r12} @guardo os valores dos regs
+   
+   LDR r12, =linhaA
+   LDR r1, [r12,#52] @Carrega valor de PC
+   LDR r2, [r12,#56] @Carrega valor de CPSR
+   LDR r3, [r12,#60] @Carrega valor de LR
+   LDR r4, [r12,#64] @Carrega valor de SP
+
+   @Load do LR e SP
+   MSR CPSR, R2 @vai para o modo supervisor
+   MOV LR, r3 @LOAD o LR do modo supervisor
+   MOV SP, r4 @LOAD o SP do modo supervisor
+   MSR CPSR, R1 @Volta para o modo atual irq
+   
+   @Retorna os regs
+   LDMFD sp!, {r0-r12}
+
+   LDR r0, INTPND @Carrega o registrador de status de interrupção 
+   LDR r0, [r0]
+   TST r0, #0x0010 @verifica se é uma interupção de timer
+   BLNE handler_taskB @vai para o rotina de tratamento da interupção de timer
+   LDMFD sp!,{R0-R12,pc}^
 
 timer_init:
  mrs r0, cpsr

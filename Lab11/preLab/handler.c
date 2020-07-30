@@ -16,6 +16,19 @@ int handler() {
     return 0;
 }
 
+int handler_taskA() {
+    *TIMER0X = 0;
+    print_uart0("0");
+    return 0;
+}
+
+int handler_taskB() {
+    *TIMER0X = 0;
+    print_uart0("1");
+    return 0;
+
+}
+
 int printSpaces() {
     print_uart0(" "); 
     return 0;  
