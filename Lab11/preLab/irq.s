@@ -68,37 +68,52 @@ do_irq_interrupt: @Rotina de interrupções IRQ
    SUB LR, LR, #0x4
    STMFD sp!, {r0-r12, lr} @Empilha os registradores
 
-   @Funcao para armazenar os registradores do processoA guardando no formato {LR ,SP ,CPSR ,PC ,r0-r12}
-   LDR r0, =linhaA @minha pilha para o processoA
-   STMFD r0!, {r1-r12}@Guardo os valores do processoA dos regs r1 a r12
-   LDR r1, [sp] @Quero pegar o valor de r0
-   STMFD r0!, {r1} @subo o valor de r0 que faltou, no endereco de linhaA terei os valores dos regs de r0 a r12
-
-   @Agr subir os registradores LR, CPSR, SP, PC, 
-   @PC/supervisor
-   LDR r2, [sp, #52] @Pego o valor de lr armazenado
-   STMFD r0!, {r2} @subo o valor de PC original que é LR - 4 
-   
-   @CPSR
-   MRS r4, spsr @pego valor do CPSR/supervisor
-   STMFD r0!, {r4} @guardo em linha A
-
-   @LR e SP
-   MRS R1, CPSR @Armazena o modo atual irq
-   MRS R2, SPSR 
-   MSR CPSR, R2 @vai para o modo supervisor
-   STMFD r0!, {LR,SP} @Guarda o LR e SP do modo supervisor
-   MSR CPSR, R1 @Volta para o modo atual irq
-
-   @ Troca tudo
    LDR r0, =1 
    LDR r1, =2 
    LDR r2, =3 
    LDR r3, =4 
    LDR r4, =5 
    LDR r6, =7 
+   LDR r7, =1 
+   LDR r8, =2 
+   LDR r9, =3 
+   LDR r10, =4 
+   LDR r11, =5 
+   LDR r12, =100 
+
+   @Funcao para armazenar os registradores do processoA guardando no formato {r0-r12, PC, CPSR, LR, SP}
+   STMFD sp!, {r12} @empilha R0
+   LDR r12, =linhaA
+   STM r12, {r0-r11}@Guardo os valores do processoA dos regs r1 a r12
+   LDMFD sp!, {r2} @pega o valor antigo de r12 
+   STR r2, [r12, #48]
+
+   @Agr subir os registradores LR, CPSR, SP, PC, 
+   @PC/supervisor
+   LDR r2, [sp, #52] @Pego o valor de lr armazenado
+   STR r2, [r12, #52] @subo o valor de PC original que é LR - 4 que estava salvo já na pilha
    
-   @Vou tentar recuperar aqui {LR ,SP ,CPSR ,PC ,r0-r12}
+   @CPSR
+   MRS r4, spsr @pego valor do CPSR/supervisor
+   STR r4, [r12, #56] @guardo em linha A
+
+   @LR e SP
+   MRS R1, CPSR @Armazena o modo atual irq
+   MRS R2, SPSR 
+   MSR CPSR, R2 @vai para o modo supervisor
+   STR LR, [r12, #60] @Guarda o LR do modo supervisor
+   STR SP, [r12, #64] @Guarda o SP do modo supervisor
+   MSR CPSR, R1 @Volta para o modo atual irq
+
+   @ Troca tudo
+   LDR r0, =11
+   LDR r1, =12 
+   LDR r2, =13 
+   LDR r3, =14 
+   LDR r4, =15 
+   LDR r6, =16 
+   
+   @Recuperar {r0-r12, PC, CPSR, LR, SP }
    LDR r12, =linhaA
    SUB r12, r12, #92 @pega o primeiro item do vetor
    MRS R1, CPSR @Armazena o modo atual irq
