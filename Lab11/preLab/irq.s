@@ -25,8 +25,6 @@ TIMER0L:.word 0x101E2000 @Timer 0 load register
 TIMER0V:.word 0x101E2004 @Timer 0 value registers
 TIMER0C:.word 0x101E2008 @timer 0 control register
 
-
-
 _Reset:
 	LDR sp, =svc_stack_top
 
@@ -66,38 +64,59 @@ do_software_interrupt:
     
 @Rotina de interrupções IRQ    
 do_irq_interrupt: @Rotina de interrupções IRQ
-   
-   @ Valores fixos para os registradores apenas para visualizar se 
-   @ a memória de linhaA está armazenando os registradores corretamente
-   LDR r0, =1 @ Teste
-   LDR r1, =2 @ Teste
-   LDR r2, =3 @ Teste
-   LDR r3, =4 @ Teste
-   LDR r4, =5 @ Teste
-   LDR r5, =6 @ Teste
-   LDR r6, =7 @ Teste
-   LDR r7, =1 @ Teste
-   LDR r8, =2 @ Teste
-   LDR r9, =3 @ Teste
-   LDR r10, =4 @ Teste
-   LDR r11, =5 @ Teste
-   LDR r12, =6 @ Teste
+   @Salvar os registradores em linhaA
+   SUB LR, LR, #0x4
+   STMFD sp!, {r0-r12, lr} @Empilha os registradores
 
-   STMFD sp!, {r0-r12, PC} @Guarda os valores do modo supervisor no stack
-
-   @Funcao para armazenar os registradores do processoA
+   @Funcao para armazenar os registradores do processoA guardando no formato {LR ,SP ,CPSR ,PC ,r0-r12}
    LDR r0, =linhaA @minha pilha para o processoA
    STMFD r0!, {r1-r12}@Guardo os valores do processoA dos regs r1 a r12
    LDR r1, [sp] @Quero pegar o valor de r0
    STMFD r0!, {r1} @subo o valor de r0 que faltou, no endereco de linhaA terei os valores dos regs de r0 a r12
 
-   @Loop para copiar os dados que estao no SP
+   @Agr subir os registradores LR, CPSR, SP, PC, 
+   @PC/supervisor
+   LDR r2, [sp, #52] @Pego o valor de lr armazenado
+   STMFD r0!, {r2} @subo o valor de PC original que é LR - 4 
+   
+   @CPSR
+   MRS r4, spsr @pego valor do CPSR/supervisor
+   STMFD r0!, {r4} @guardo em linha A
 
+   @LR e SP
+   MRS R1, CPSR @Armazena o modo atual irq
+   MRS R2, SPSR 
+   MSR CPSR, R2 @vai para o modo supervisor
+   STMFD r0!, {LR,SP} @Guarda o LR e SP do modo supervisor
+   MSR CPSR, R1 @Volta para o modo atual irq
+
+   @ Troca tudo
+   LDR r0, =1 
+   LDR r1, =2 
+   LDR r2, =3 
+   LDR r3, =4 
+   LDR r4, =5 
+   LDR r6, =7 
+   
+   @Vou tentar recuperar aqui {LR ,SP ,CPSR ,PC ,r0-r12}
+   LDR r12, =linhaA
+   SUB r12, r12, #92 @pega o primeiro item do vetor
+   MRS R1, CPSR @Armazena o modo atual irq
+   MRS R2, SPSR 
+   MSR CPSR, R2 @vai para o modo supervisor
+   LDMFD r12!, {LR,SP} @Guarda o LR e SP do modo supervisor
+   LDMFD r12!, {r11} @pego o CPSR supervisor
+   MSR CPSR, R11 @atualizo o valor do CPSR anterior
+   MSR CPSR, R1 @Volta para o modo atual irq
+   LDMFD r12!, {r0, r0-r12}^
+
+
+   @Loop para copiar os dados que estao no SP
    LDR r0, INTPND @Carrega o registrador de status de interrupção 
    LDR r0, [r0]
    TST r0, #0x0010 @verifica se é uma interupção de timer
    BLNE handler @vai para o rotina de tratamento da interupção de timer
-   LDMFD sp!,{R0-R12,pc}^
+   LDMFD sp!,{R0-R12,pc}
 
 
 timer_init:
