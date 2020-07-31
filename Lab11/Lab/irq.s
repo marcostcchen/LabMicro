@@ -79,7 +79,7 @@ timer_init:
     mov pc, lr
 
 main:
-    @bl c_entry
+    bl c_entry
     LDR r0, =nproc
     LDR r1, =0x00
     STR r1, [r0]

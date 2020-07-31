@@ -7,6 +7,10 @@ void print_uart0(const char *s) {
         s++; /* Next char */
     }
 }
+ 
+void c_entry() {
+    print_uart0("Hello world!\n");
+}
 
 void print_hash(){
     *TIMER0X = 0;
@@ -19,11 +23,24 @@ void print_space() {
 }
 
 void print_1() {
-	print_uart0("1");
+    int i = 0;
+    while (1) {
+        print_uart0("1");
+        while(i < 100000) {
+            i++;
+        }
+        i = 0;
+    }
 }
 
 void print_2() {
-	print_uart0("2");
+    int i = 0;
+    while (1) {
+        print_uart0("2");
+        while(i < 100000) {
+            i++;
+        }
+        i = 0;
+    }
 }
-
 
