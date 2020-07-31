@@ -139,6 +139,7 @@ handler_timer:
     LDR r0, =previous_lr
     STR lr, [r0]
     LDR r0, TIMER0X
+bl print_hash
     MOV r1, #0x0
     STR r1, [r0]
     bl handle_process

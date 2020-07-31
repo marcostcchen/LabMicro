@@ -12,10 +12,10 @@ void c_entry() {
     print_uart0("Hello world!\n");
 }
 
-void print_hash(){
+int print_hash(){
     *TIMER0X = 0;
     print_uart0("#");
-    return;
+    return 0;
 }
 
 void print_space() {
@@ -23,24 +23,11 @@ void print_space() {
 }
 
 void print_1() {
-    int i = 0;
-    while (1) {
-        print_uart0("1");
-        while(i < 100000) {
-            i++;
-        }
-        i = 0;
-    }
+	print_uart0("1");
 }
 
 void print_2() {
-    int i = 0;
-    while (1) {
-        print_uart0("2");
-        while(i < 100000) {
-            i++;
-        }
-        i = 0;
-    }
+	print_uart0("2");
 }
+
 
