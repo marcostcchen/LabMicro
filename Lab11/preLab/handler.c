@@ -16,17 +16,21 @@ int handler() {
     return 0;
 }
 
-int handler_taskA() {
-    *TIMER0X = 0;
-    print_uart0("0");
-    return 0;
+void handler_taskA() {
+    int i = 0;
+    while(i < 5000000) {
+        print_uart0("0");
+        i++;
+    }
 }
 
-int handler_taskB() {
-    *TIMER0X = 0;
-    print_uart0("1");
-    return 0;
-
+void handler_taskB() {
+    int i = 0;
+    while(i < 5000000) {
+        print_uart0("1");
+        i++;
+    }
+    i = 0;
 }
 
 int printSpaces() {
