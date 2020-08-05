@@ -66,7 +66,7 @@ do_software_interrupt:              @Rotina de Interrupçãode software
 @Rotina de interrupções IRQ
 do_irq_interrupt: @Rotina de interrupções IRQ
   @Empilho primeiro na estrutura auxiliar e dps salvo na estrutura correspondente
-  @ {r0-r12, LR/sup, SP/sup, PC/sup, CPSR}
+  @ {r0-r12, SP/sup, LR/sup, PC/sup, CPSR}
   SUB LR, LR, #4
   STMFD sp!, {r12}                  @salvo o R12 na pilha para liberar espaço
   LDR r12, =linhaAux                @coloco o endereco de de linhaA em R12
@@ -83,9 +83,9 @@ do_irq_interrupt: @Rotina de interrupções IRQ
   MRS r2, cpsr                      @ salvando o modo corrente em R2
   MSR cpsr_ctl, #0b11010011         @ alterando o modo para supervisor o SP eh automaticamente chaveado ao chavear o modo
   LDR r0, =linhaAux                 
-  MOV r1, sp                        @stack pointer do supervisor
-  STR r1,[r0, #56]
   MOV r1, lr                        @lr do supervisor
+  STR r1,[r0, #56]
+  MOV r1, sp                        @sp do supervisor
   STR r1,[r0, #52]
   MSR cpsr, r2                      @ volta para o modo anterior
 
@@ -95,7 +95,8 @@ do_irq_interrupt: @Rotina de interrupções IRQ
   BEQ ArmazenaEmA
   cmp r0, #1
   BEQ ArmazenaEmB
-  B   ArmazenaEmC
+  cmp r0, #2
+  BEQ ArmazenaEmC
 
   @----------------------------Empilha na linha correspondente------------------------------
 ArmazenaEmA:
@@ -125,6 +126,7 @@ ArmazenaEmC:
   STMIA R12!,{R0-R11}               @ salvo em linhaA os valores de r0 a r11
   LDR R0, =linhaAux + 48            @ pego endereco dps de do r11
   LDMIA R0, {R1-R5}                 @ carrego o r12 sp lr pc e cpsr
+  @CPSR ta no R5
   STMIA R12, {R1-R5}                @ salvo os valores carregados em r0 a r5 no r12 alterado
   B Fim_salva
 
@@ -133,7 +135,7 @@ Fim_salva:
   LDR r0, [r0]
   TST r0, #0x0010 @verifica se é uma interupção de timer
   BLNE handler_timer @vai para o rotina de tratamento da interupção de timer
-  @LDMFD sp!,{R0-R12,pc}^
+  LDMFD sp!,{R0-R12,pc}^
 
 handler_timer:
   LDR r0, TIMER0X
@@ -145,18 +147,19 @@ handler_timer:
 @---------------------------------carrego os outros valores-----------------------
 @ ---------------------------Vejo se eh a ou b e carrego -------------------------
   LDR r0, nproc
-  cmp r0, #0
+  CMP r0, #0
   BEQ CarregaB
-  cmp r0, #1
+  CMP r0, #1
   BEQ CarregaC
-  B   CarregaA
+  B CarregaA
 
 CarregaA:
   LDR R0, =nproc
   LDR R1, =0
   STR R1, [R0]
-  LDR R0, =linhaA + 64
-  MSR cpsr, R0
+  LDR R0, =linhaA
+  LDR R1, [R0, #64]
+  MSR cpsr, R1
   LDR R0, =linhaA
   LDMIA R0, {R0-R15}^ @Carrego os outros valores e ja volta
   LDMFD sp!,{pc}
@@ -165,8 +168,9 @@ CarregaB:
   LDR R0, =nproc
   LDR R1, =1
   STR R1, [R0]
-  LDR R0, =linhaB + 64 @Carrego o endereco do cpsr
-  MSR cpsr, R0 @Vou para o modo do processo
+  LDR R0, =linhaB
+  LDR R1, [R0, #64]
+  MSR cpsr, R1 @Vou para o modo do processo
   LDR R0, =linhaB
   LDMIA R0, {R0-R15}^ @Carrego os outros valores e ja volta
   LDMFD sp!,{pc} @Vou para o processoB
@@ -175,11 +179,12 @@ CarregaC:
   LDR R0, =nproc
   LDR R1, =2
   STR R1, [R0]
-  LDR R0, =linhaC + 64 @Carrego o endereco do cpsr
-  MSR cpsr, R0 @Vou para o modo do processo
+  LDR R0, =linhaC
+  LDR R1, [R0, #64]
+  MSR cpsr, R1 @Vou para o modo do processo
   LDR R0, =linhaC
   LDMIA R0, {R0-R15}^ @Carrego os outros valores e ja volta
-  LDMFD sp!,{pc} @Vou para o processoC
+  LDMFD sp!,{pc} @Vou para o processoB
 
 timer_init:
   LDR r0, INTEN @Habilita as interrupções
@@ -198,7 +203,7 @@ timer_init:
 
 main:
   BL hello_word
-  bl timer_init                     @initialize interrupts and timer 0
+  BL timer_init                     @initialize interrupts and timer 0
   b ProcessoA
 
 ProcessoA:
@@ -227,10 +232,10 @@ linhaA:
   .word 0 @r10
   .word 0 @r11
   .word 0 @r12
-  .word 0 @SP
+  .word stack_taskA @SP
   .word 0 @LR
-  .word 0 @PC
-  .word 0 @CPSR
+  .word ProcessoA @PC
+  .word 0x20000153 @CPSR
 
 linhaB:
   .word 1 @r0

@@ -9,8 +9,10 @@ SECTIONS{
   svc_stack_top = .;
   . = . + 0x1000; /* 4kB of stack memory */
   interrupt_stack_top = .;
-  . = . + 0x1000; /* 4kB of stack memory */
+  . = . + 0x2000; 
+  stack_taskA = .;
+  . = . + 0x2000; 
   stack_taskB = .;
-    . = . + 0x1000; /* 4kB of stack memory */
+  . = . + 0x2000; 
   stack_taskC = .;
   }
