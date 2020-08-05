@@ -157,13 +157,13 @@ CarregaB:
   LDMFD sp!,{pc} @Vou para o processoB
 
 timer_init:
-  LDR r0, INTEN
+  LDR r0, INTEN @Habilita as interrupções
   LDR r1,=0x10 @bit 4 for timer 0 interrupt enable
   STR r1,[r0]
-  LDR r0, TIMER0L
-  LDR r1, =0x0100000 @setting timer value
+  LDR r0, TIMER0L @carrega o valor inicial do timer
+  LDR r1, =0x0010000 @setting timer value
   STR r1,[r0]
-  LDR r0, TIMER0C
+  LDR r0, TIMER0C @Ativar o timer e o modo de execução
   MOV r1, #0xE0 @enable timer module
   STR r1, [r0]
   mrs r0, cpsr 
