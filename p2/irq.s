@@ -66,26 +66,26 @@ do_software_interrupt:              @Rotina de Interrupçãode software
 @Rotina de interrupções IRQ
 do_irq_interrupt: @Rotina de interrupções IRQ
   @Empilho primeiro na estrutura auxiliar e dps salvo na estrutura correspondente
-
+  @ {r0-r12, LR/sup, SP/sup, PC/sup, CPSR}
   SUB LR, LR, #4
-  STMFD sp!, {r12}                  @salvo o R12 na pilha
+  STMFD sp!, {r12}                  @salvo o R12 na pilha para liberar espaço
   LDR r12, =linhaAux                @coloco o endereco de de linhaA em R12
   STM r12, {r0-r11}                 @guardo os r0 a r11 na no endereco de linha A
-  mov r0, r12                       @coloco o endereco do linhaA no R0
+  MOV r0, r12                       @coloco o endereco do linhaA no R0
   LDMFD sp!,{R12}                   @desempilho o antigo valor do r12 no proprio r12
   STR r12,[R0, #48]                 @salvo o R12 deslocado 48 bytes
 
   MRS r1, SPSR                      @pega o valor do cpsr do supervisor
   STR r1,[R0, #64]                  @salvando o CPSR do supervisor
-  MOV r1, lr                        @pega o lr
-  STR r1,[R0, #60]                  @salva o lr
+  MOV r1, lr                        @pega o pc do supervisor
+  STR r1,[R0, #60]                  @salva o pc do supervisor
   
   MRS r2, cpsr                      @ salvando o modo corrente em R2
   MSR cpsr_ctl, #0b11010011         @ alterando o modo para supervisor o SP eh automaticamente chaveado ao chavear o modo
   LDR r0, =linhaAux                 
-  mov r1, sp                        @stack pointer do supervisor
+  MOV r1, sp                        @stack pointer do supervisor
   STR r1,[r0, #56]
-  mov r1, lr                        @PC do supervisor
+  MOV r1, lr                        @lr do supervisor
   STR r1,[r0, #52]
   MSR cpsr, r2                      @ volta para o modo anterior
 
@@ -95,6 +95,7 @@ do_irq_interrupt: @Rotina de interrupções IRQ
   BEQ ArmazenaEmA
   B   ArmazenaEmB
 
+  @----------------------------Empilha na linha correspondente------------------------------
 ArmazenaEmA:
   LDR r12, =linhaAux                @ pego o endereco de aux
   LDMIA R12, {R0-R11}               @ carrego os r0 a r11
@@ -115,14 +116,11 @@ ArmazenaEmB:
   STMIA R12, {R1-R5}                @ salvo os valores carregados em r0 a r5 no r12 alterado
 
 Fim_salva:
-@--------------------------------- Imprime o #-----------------------------------
-  @Empilha os registradores
   LDR r0, INTPND @Carrega o registrador de status de interrupção
   LDR r0, [r0]
   TST r0, #0x0010 @verifica se é uma interupção de timer
   BLNE handler_timer @vai para o rotina de tratamento da interupção de timer
-
-  LDMFD sp!,{R0-R12,pc}^
+  @LDMFD sp!,{R0-R12,pc}^
 
 handler_timer:
   LDR r0, TIMER0X
@@ -145,7 +143,7 @@ CarregaA:
   LDR R0, =linhaA + 64
   MSR cpsr, R0
   LDR R0, =linhaA
-  LDMIA R0, {R0-R15}
+  LDMIA R0, {R0-R15} @Carrego os outros valores e ja volta
   LDMFD sp!,{pc}
 
 CarregaB:
@@ -155,7 +153,7 @@ CarregaB:
   LDR R0, =linhaB + 64 @Carrego o endereco do cpsr
   MSR cpsr, R0 @Vou para o modo do processo
   LDR R0, =linhaB
-  LDMIA R0, {R0-R15} @Carrego os outros valores do processoB
+  LDMIA R0, {R0-R15} @Carrego os outros valores e ja volta
   LDMFD sp!,{pc} @Vou para o processoB
 
 timer_init:
