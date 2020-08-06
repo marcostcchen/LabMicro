@@ -222,10 +222,10 @@ linhaB:
   .word 11 @r10
   .word 12 @r11
   .word 13 @r12
-  .word stack_taskB @SP
+  .word abort_stack_top @SP
   .word 0 @LR
   .word ProcessoB @PC
-  .word 0x20000153 @CPSR
+  .word 0x200001D7 @CPSR
 
 linhaAux: @Regiao para guardar os valores temporariamente
   .skip 68
